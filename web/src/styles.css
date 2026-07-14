@@ -1,0 +1,61 @@
+/* Design tokens - the final autie-2 visual design lands here as a token swap.
+   Interim palette: calm, low-stimulus, high readability. */
+:root {
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-primary: #4a7c8c;
+  --color-on-primary: #ffffff;
+  --color-text: #2a3138;
+  --color-text-soft: #6b747d;
+  --color-border: #d5dade;
+  --color-error-bg: #fdecea;
+  --color-error-text: #8a2a22;
+
+  --space-1: 0.25rem;
+  --space-2: 0.625rem;
+  --space-3: 1rem;
+  --space-4: 2rem;
+  --radius: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #191d21;
+    --color-surface: #242a30;
+    --color-primary: #6fa3b4;
+    --color-on-primary: #14181b;
+    --color-text: #e4e8eb;
+    --color-text-soft: #98a1a9;
+    --color-border: #3a4249;
+    --color-error-bg: #402522;
+    --color-error-text: #f0b6ae;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

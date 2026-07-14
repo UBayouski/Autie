@@ -1,0 +1,30 @@
+<div class="chat">
+  <header class="chat-header">
+    <h1>Autie</h1>
+    <p class="tagline">A companion for the autism community</p>
+  </header>
+
+  <main #scroller class="messages" aria-live="polite">
+    @if (chat.messages().length === 0) {
+      <div class="welcome">
+        <h2>Hi, I'm Autie.</h2>
+        <p>
+          I'm here for parents, caregivers, educators — and autistic people
+          themselves. Ask me anything about autism, or ask me to find local
+          services like therapists, schools, or support groups near you.
+        </p>
+      </div>
+    }
+    @for (message of chat.messages(); track $index) {
+      <app-message-bubble [message]="message" />
+    }
+  </main>
+
+  <app-composer [disabled]="chat.busy()" (send)="chat.send($event)" />
+
+  <footer class="disclosure">
+    Autie is an AI assistant, not a clinician. For medical advice, please talk
+    to a qualified professional. In a crisis, call or text
+    <strong>988</strong> (Suicide &amp; Crisis Lifeline).
+  </footer>
+</div>

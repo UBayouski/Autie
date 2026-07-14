@@ -1,0 +1,28 @@
+@if (message().crisis; as crisis) {
+  <div class="crisis-card" role="alert">
+    <p class="crisis-message">{{ crisis.message }}</p>
+    <ul>
+      @for (resource of crisis.resources; track resource.name) {
+        <li>
+          <strong>{{ resource.name }}</strong> — {{ resource.contact }}
+          <span class="crisis-note">{{ resource.note }}</span>
+        </li>
+      }
+    </ul>
+  </div>
+} @else {
+<div
+  class="bubble"
+  [class.user]="message().role === 'user'"
+  [class.assistant]="message().role === 'assistant'"
+  [class.error]="message().error"
+>
+  @if (message().role === 'assistant' && message().text === '') {
+    <span class="thinking">Autie is thinking…</span>
+  } @else if (message().role === 'assistant') {
+    <div class="content" [innerHTML]="message().text | markdown"></div>
+  } @else {
+    <div class="content">{{ message().text }}</div>
+  }
+</div>
+}
