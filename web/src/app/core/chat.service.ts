@@ -161,8 +161,16 @@ export class ChatService {
         this.appendToLast(event.text);
         break;
       case 'text_final':
-        // Authoritative full text for the CURRENT segment only.
-        this.setLast(event.text);
+        if (this.lastSegmentDone) {
+          // Final with no preceding deltas (e.g. the sources footer): its own bubble.
+          this.messages.update((m) => [
+            ...m,
+            { role: 'assistant', text: event.text },
+          ]);
+        } else {
+          // Authoritative full text for the CURRENT segment only.
+          this.setLast(event.text);
+        }
         this.lastSegmentDone = true;
         break;
       case 'error':

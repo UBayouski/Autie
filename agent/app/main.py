@@ -4,6 +4,7 @@ Privacy constraint (docs/architecture.md §5): never log conversation text —
 log metadata only (session id, latency, event counts).
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -45,6 +46,18 @@ else:
 runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
 
 app = FastAPI(title="Autie agent service", version="0.1.0")
+
+# Serializes concurrent sends on the same session within this instance (e.g.
+# two tabs). Cross-instance races remain possible but are rare at this scale
+# and concurrency setting; see docs/backlog.md.
+_session_locks: dict[str, asyncio.Lock] = {}
+
+
+def _session_lock(key: str) -> asyncio.Lock:
+    if len(_session_locks) > 5000:  # unbounded-growth guard
+        for stale_key in [k for k, v in _session_locks.items() if not v.locked()]:
+            del _session_locks[stale_key]
+    return _session_locks.setdefault(key, asyncio.Lock())
 
 
 class ChatRequest(BaseModel):
@@ -107,26 +120,45 @@ async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)) -> St
         if detect_crisis(req.message):
             logger.info("crisis pre-check triggered session=%s", session_id)
             yield _sse({"type": "crisis_resources", **CRISIS_RESOURCES})
+        # url -> title, in first-use order; filled from tool responses so the
+        # links are appended VERBATIM by code, never retyped by the model.
+        sources: dict[str, str] = {}
         try:
-            new_message = types.Content(role="user", parts=[types.Part(text=req.message)])
-            async for event in runner.run_async(
-                user_id=user_id,
-                session_id=session_id,
-                new_message=new_message,
-                run_config=RunConfig(streaming_mode=StreamingMode.SSE),
-            ):
-                events += 1
-                if not (event.content and event.content.parts):
-                    continue
-                for part in event.content.parts:
-                    if not part.text:
+            async with _session_lock(f"{user_id}:{session_id}"):
+                new_message = types.Content(
+                    role="user", parts=[types.Part(text=req.message)]
+                )
+                async for event in runner.run_async(
+                    user_id=user_id,
+                    session_id=session_id,
+                    new_message=new_message,
+                    run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+                ):
+                    events += 1
+                    if not (event.content and event.content.parts):
                         continue
-                    if event.partial:
-                        yield _sse({"type": "text_delta", "text": part.text})
-                    elif event.is_final_response():
-                        scan_reply(part.text, session_id)
-                        # Full final text; clients that consumed deltas may ignore it.
-                        yield _sse({"type": "text_final", "text": part.text})
+                    for part in event.content.parts:
+                        response = getattr(part, "function_response", None)
+                        if response and response.name == "search_knowledge_base":
+                            for excerpt in (response.response or {}).get("excerpts", []):
+                                url = excerpt.get("source_url")
+                                if url:
+                                    sources.setdefault(
+                                        url, excerpt.get("source_title") or url
+                                    )
+                        if not part.text:
+                            continue
+                        if event.partial:
+                            yield _sse({"type": "text_delta", "text": part.text})
+                        elif event.is_final_response():
+                            scan_reply(part.text, session_id)
+                            # Full final text; delta consumers may ignore it.
+                            yield _sse({"type": "text_final", "text": part.text})
+            if sources:
+                footer = "**Sources:**\n" + "\n".join(
+                    f"- [{title}]({url})" for url, title in sources.items()
+                )
+                yield _sse({"type": "text_final", "text": footer})
             yield _sse({"type": "done"})
             logger.info(
                 "chat ok session=%s events=%d latency_ms=%d",

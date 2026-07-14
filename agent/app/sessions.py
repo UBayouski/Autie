@@ -159,10 +159,16 @@ class FirestoreSessionService(BaseSessionService):
     async def list_sessions(
         self, *, app_name: str, user_id: Optional[str] = None
     ) -> ListSessionsResponse:
-        if user_id is not None:
-            query = self._user_ref(app_name, user_id).collection("sessions")
-        else:
-            query = self._db.collection_group("sessions").where("app_name", "==", app_name)
+        if user_id is None:
+            # The cross-user collection-group query needs a composite index on
+            # (app_name) that we haven't created; fail loudly instead of at
+            # query time if this path is ever exercised (docs/backlog.md).
+            raise NotImplementedError(
+                "list_sessions across all users requires a composite index on "
+                "the 'sessions' collection group; create it before enabling "
+                "this path."
+            )
+        query = self._user_ref(app_name, user_id).collection("sessions")
 
         sessions = []
         async for doc in query.stream():
@@ -170,10 +176,10 @@ class FirestoreSessionService(BaseSessionService):
             sessions.append(
                 await self._merge_scoped_state(
                     app_name,
-                    data["user_id"],
+                    user_id,
                     Session(
                         app_name=app_name,
-                        user_id=data["user_id"],
+                        user_id=user_id,
                         id=doc.id,
                         state=data.get("state", {}),
                         last_update_time=data.get("last_update_time", 0.0),

@@ -17,6 +17,7 @@ textarea {
   color: var(--color-text);
   min-height: 2.75rem;
   max-height: 8rem;
+  overflow-y: auto;
 }
 
 textarea:focus-visible {

@@ -1,11 +1,12 @@
 <form class="composer" (submit)="$event.preventDefault(); submit()">
   <textarea
+    #box
     name="message"
     rows="1"
     placeholder="Ask me anything…"
     aria-label="Your message"
     [value]="draft()"
-    (input)="draft.set($any($event.target).value)"
+    (input)="onInput($event)"
     (keydown)="onKeydown($event)"
   ></textarea>
   <button type="submit" [disabled]="disabled() || !draft().trim()">
