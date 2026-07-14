@@ -48,8 +48,23 @@ With `AUTH_DISABLED=true` unset (i.e. production behavior), requests need
 - `search_knowledge_base(question)` — custom RAG on Firestore vector search
   (`rag_chunks`, 768-dim `gemini-embedding-001`, COSINE, top-6). Answers are
   cited inline. Guardrails: `../docs/rag-constraints.md`. Corpus + pipeline:
-  `ingestion/` (`python -m ingestion.ingest`); retrieval evals:
-  `RUN_RAG_EVALS=1 pytest tests/test_rag_evals.py`.
+  `ingestion/`; retrieval evals: `RUN_RAG_EVALS=1 pytest tests/test_rag_evals.py`.
+
+  Ingestion is manual and independent of deploys — Cloud Run only reads
+  `rag_chunks`, so shipping the agent never rebuilds the index. Rebuild after
+  editing `ingestion/corpus.json`:
+
+  ```
+  python -m ingestion.ingest --dry-run   # fetch + chunk only, no writes, no cost
+  python -m ingestion.ingest             # upsert every chunk in place
+  python -m ingestion.ingest --prune     # ...then delete chunks dropped from the manifest
+  ```
+
+  `--prune` sweeps after a clean ingest rather than wiping first, so a failed
+  run can't leave the index empty; it self-skips if any source failed to fetch.
+  Corpus mix is intentionally ~70% autism / ~30% other neurodevelopmental
+  conditions. PMC sources are fetched via the NCBI E-utilities API — the
+  article pages serve a reCAPTCHA to scripts, which scrapes as junk text.
 - `get_crisis_resources()` — deterministic USA crisis directory (988 etc.),
   served verbatim; also emitted by the safety pre-check in `app/safety/`.
 

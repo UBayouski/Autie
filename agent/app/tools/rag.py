@@ -39,12 +39,14 @@ def _clients() -> tuple[genai.Client, firestore.AsyncClient]:
 
 
 async def search_knowledge_base(question: str) -> dict:
-    """Searches Autie's curated knowledge base about autism and related topics.
+    """Searches Autie's curated knowledge base on neurodevelopmental conditions.
 
-    Use this FIRST for informational questions: what autism is, signs and
-    symptoms, screening and diagnosis, therapies and interventions, prevalence
-    and research, education rights. The excerpts come from vetted sources
-    (CDC, NIH, MedlinePlus).
+    Use this FIRST for informational questions: signs and symptoms, screening
+    and diagnosis, therapies and interventions, prevalence and research,
+    education rights. Coverage is mostly autism, and also includes ADHD,
+    dyslexia, dyspraxia/DCD, Tourette syndrome, intellectual disability, and
+    developmental language disorder. The excerpts come from vetted sources
+    (CDC, NIH, MedlinePlus, and open-access peer-reviewed reviews).
 
     Base your answer on the returned excerpts and cite each source inline as a
     markdown link using its source_title and source_url. If the results don't

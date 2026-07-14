@@ -20,6 +20,7 @@ dev = [
 ]
 ingestion = [
     "beautifulsoup4>=4.12",
+    "lxml>=5.0",  # XML parser for PMC JATS full text (see ingestion/ingest.py)
 ]
 
 [build-system]
