@@ -1,0 +1,47 @@
+{
+  "comment": "RAG corpus manifest. Only openly licensed / public-domain sources (docs/rag-constraints.md). US federal government content is public domain.",
+  "sources": [
+    {
+      "url": "https://www.cdc.gov/autism/signs-symptoms/index.html",
+      "source_title": "CDC — Signs and Symptoms of Autism Spectrum Disorder",
+      "license": "public-domain-us-gov",
+      "tags": ["signs", "symptoms", "diagnosis", "asd"]
+    },
+    {
+      "url": "https://www.cdc.gov/autism/diagnosis/index.html",
+      "source_title": "CDC — Screening and Diagnosis of Autism Spectrum Disorder",
+      "license": "public-domain-us-gov",
+      "tags": ["screening", "diagnosis", "asd", "mchat"]
+    },
+    {
+      "url": "https://www.cdc.gov/autism/treatment/index.html",
+      "source_title": "CDC — Treatment and Intervention Services for Autism",
+      "license": "public-domain-us-gov",
+      "tags": ["treatment", "therapy", "aba", "intervention"]
+    },
+    {
+      "url": "https://www.cdc.gov/autism/data-research/index.html",
+      "source_title": "CDC — Autism Data and Research",
+      "license": "public-domain-us-gov",
+      "tags": ["statistics", "prevalence", "research"]
+    },
+    {
+      "url": "https://www.nimh.nih.gov/health/topics/autism-spectrum-disorders-asd",
+      "source_title": "NIMH — Autism Spectrum Disorder",
+      "license": "public-domain-us-gov",
+      "tags": ["asd", "overview", "treatment", "research"]
+    },
+    {
+      "url": "https://www.nichd.nih.gov/health/topics/autism/conditioninfo",
+      "source_title": "NICHD — About Autism Spectrum Disorder",
+      "license": "public-domain-us-gov",
+      "tags": ["asd", "overview", "causes"]
+    },
+    {
+      "url": "https://medlineplus.gov/autismspectrumdisorder.html",
+      "source_title": "MedlinePlus — Autism Spectrum Disorder",
+      "license": "public-domain-us-gov",
+      "tags": ["asd", "overview", "resources"]
+    }
+  ]
+}

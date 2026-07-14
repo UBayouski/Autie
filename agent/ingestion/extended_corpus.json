@@ -1,6 +1,5 @@
 {
-  "comment": "RAG corpus manifest. Only openly licensed / public-domain sources (docs/rag-constraints.md). US federal government content is public domain. Mix is intentionally ~70% autism / ~30% other neurodevelopmental conditions; keep that ratio when adding sources. PMC URLs are fetched via the E-utilities efetch API, not scraped (see ingest.py).",
-  "sources": [
+"sources": [
     {
       "url": "https://www.cdc.gov/autism/about/index.html",
       "source_title": "CDC — About Autism Spectrum Disorder",
@@ -14,46 +13,16 @@
       "tags": ["signs", "symptoms", "diagnosis", "asd"]
     },
     {
-      "url": "https://www.cdc.gov/autism/diagnosis/index.html",
-      "source_title": "CDC — Screening and Diagnosis of Autism Spectrum Disorder",
-      "license": "public-domain-us-gov",
-      "tags": ["screening", "diagnosis", "asd", "mchat"]
-    },
-    {
-      "url": "https://www.cdc.gov/autism/treatment/index.html",
-      "source_title": "CDC — Treatment and Intervention Services for Autism",
-      "license": "public-domain-us-gov",
-      "tags": ["treatment", "therapy", "aba", "intervention", "asd"]
-    },
-    {
       "url": "https://www.cdc.gov/autism/data-research/index.html",
-      "source_title": "CDC — Autism Data and Research",
+      "source_title": "CDC — Data and Statistics on Autism Spectrum Disorder",
       "license": "public-domain-us-gov",
-      "tags": ["statistics", "prevalence", "research", "asd"]
+      "tags": ["prevalence", "statistics", "epidemiology", "asd"]
     },
     {
       "url": "https://www.cdc.gov/mmwr/volumes/74/ss/ss7402a1.htm",
       "source_title": "Prevalence and Early Identification of Autism Spectrum Disorder Among Children Aged 4 and 8 Years — ADDM Network, 16 Sites, United States, 2022 (MMWR)",
       "license": "public-domain-us-gov",
       "tags": ["prevalence", "epidemiology", "surveillance", "asd", "children"]
-    },
-    {
-      "url": "https://www.nimh.nih.gov/health/topics/autism-spectrum-disorders-asd",
-      "source_title": "NIMH — Autism Spectrum Disorder",
-      "license": "public-domain-us-gov",
-      "tags": ["asd", "overview", "treatment", "research"]
-    },
-    {
-      "url": "https://www.nichd.nih.gov/health/topics/autism/conditioninfo",
-      "source_title": "NICHD — About Autism Spectrum Disorder",
-      "license": "public-domain-us-gov",
-      "tags": ["asd", "overview", "causes"]
-    },
-    {
-      "url": "https://medlineplus.gov/autismspectrumdisorder.html",
-      "source_title": "MedlinePlus — Autism Spectrum Disorder",
-      "license": "public-domain-us-gov",
-      "tags": ["asd", "overview", "resources"]
     },
     {
       "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11866554/",
@@ -70,13 +39,13 @@
     {
       "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0186502",
       "source_title": "A systematic review and meta-analysis of comprehensive interventions for pre-school children with ASD",
-      "license": "CC-BY-4.0",
+      "license": "CC-BY",
       "tags": ["intervention", "preschool", "meta-analysis", "asd"]
     },
     {
       "url": "https://www.frontiersin.org/journals/psychiatry/articles/10.3389/fpsyt.2021.773604/full",
       "source_title": "Parent-Mediated Interventions for Children and Adolescents With ASD: A Systematic Review and Meta-Analysis",
-      "license": "CC-BY-4.0",
+      "license": "CC-BY",
       "tags": ["intervention", "parent-mediated", "meta-analysis", "asd"]
     },
     {
@@ -88,7 +57,7 @@
     {
       "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0224362",
       "source_title": "Implementation and effectiveness of non-specialist mediated interventions for children with ASD",
-      "license": "CC-BY-4.0",
+      "license": "CC-BY",
       "tags": ["intervention", "non-specialist", "asd"]
     },
     {
@@ -104,23 +73,40 @@
       "tags": ["comorbidity", "epilepsy", "asd"]
     },
     {
-      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7565535/",
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7565535/",
       "source_title": "Autism and Migraine: An Unexplored Association?",
       "license": "CC-BY",
       "tags": ["comorbidity", "migraine", "asd"]
     },
-
     {
-      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10733572/",
-      "source_title": "ADHD Causes and Diagnosis in Adults: A Review",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9403235/",
+      "source_title": "The lived experiences of adults with ADHD: A rapid review of qualitative evidence",
       "license": "CC-BY",
-      "tags": ["adhd", "adults", "diagnosis", "causes"]
+      "tags": ["adhd", "adults", "lived-experience", "qualitative"]
     },
     {
       "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12560001/",
       "source_title": "ADHD diagnostic tools across ages: traditional and digital approaches",
       "license": "CC-BY",
       "tags": ["adhd", "diagnosis", "screening"]
+    },
+    {
+      "url": "https://bmcpsychiatry.biomedcentral.com/articles/10.1186/s12888-025-06825-0",
+      "source_title": "Evaluating the evidence: a systematic review of reviews of the effectiveness and safety of digital interventions for ADHD",
+      "license": "CC-BY",
+      "tags": ["adhd", "digital-health", "intervention", "systematic-review"]
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10733572/",
+      "source_title": "ADHD Causes and Diagnosis in Adults: A Review",
+      "license": "CC-BY-4.0",
+      "tags": ["adhd", "adults", "diagnosis", "causes"]
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8534212/",
+      "source_title": "Is Developmental Dyslexia Due to a Visual and Not a Phonological Impairment?",
+      "license": "CC-BY-4.0",
+      "tags": ["dyslexia", "visual-processing", "phonology"]
     },
     {
       "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8870220/",
@@ -135,10 +121,34 @@
       "tags": ["dyslexia", "screening", "school"]
     },
     {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8231524/",
+      "source_title": "Developmental Dyslexia: Environment Matters",
+      "license": "CC-BY-4.0",
+      "tags": ["dyslexia", "environment", "risk-factors"]
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9667416/",
+      "source_title": "Developmental Coordination Disorder (DCD): Relevance for Clinical Psychologists in Europe",
+      "license": "CC-BY-4.0",
+      "tags": ["dyspraxia", "dcd", "clinical-psychology"]
+    },
+    {
       "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11153681/",
       "source_title": "Children with developmental coordination disorders: a review of approaches to assessment and intervention",
       "license": "CC-BY",
       "tags": ["dyspraxia", "dcd", "assessment", "intervention"]
+    },
+    {
+      "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0245738",
+      "source_title": "Children and young people's experiences of living with DCD/dyspraxia: A systematic review and meta-ethnography",
+      "license": "CC-BY",
+      "tags": ["dyspraxia", "dcd", "lived-experience", "children"]
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8829815/",
+      "source_title": "Behavioral and Neuroimaging Research on DCD: A Combined Systematic Review and Meta-Analysis",
+      "license": "CC-BY",
+      "tags": ["dyspraxia", "dcd", "neuroimaging"]
     },
     {
       "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5854651/",
@@ -147,16 +157,46 @@
       "tags": ["tourette", "tics", "overview", "clinical"]
     },
     {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9860289/",
+      "source_title": "Emerging therapies and recent advances for Tourette syndrome",
+      "license": "CC-BY-4.0",
+      "tags": ["tourette", "treatment", "therapies"]
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10098342/",
+      "source_title": "Editorial: Recent advances in understanding Tourette syndrome, tic disorders and functional tics",
+      "license": "CC-BY",
+      "tags": ["tourette", "tic-disorders", "functional-tics"]
+    },
+    {
+      "url": "https://www.frontiersin.org/journals/psychiatry/articles/10.3389/fpsyt.2022.992905/full",
+      "source_title": "How do children with Tourette's syndrome and their caregivers live with the disorder? A systematic review",
+      "license": "CC-BY",
+      "tags": ["tourette", "children", "caregivers", "lived-experience"]
+    },
+    {
       "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9513363/",
       "source_title": "Strategies for enhancing social skills of individuals with intellectual disability: A systematic review",
       "license": "CC-BY",
       "tags": ["intellectual-disability", "social-skills", "intervention"]
     },
     {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9139417/",
+      "source_title": "The Genetic and Molecular Basis of Developmental Language Disorder: A Review",
+      "license": "CC-BY-4.0",
+      "tags": ["developmental-language-disorder", "genetics", "communication-disorder"]
+    },
+    {
       "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8156743/",
       "source_title": "Developmental Language Disorder: Early Predictors, Age for the Diagnosis, and Diagnostic Tools. A Scoping Review",
       "license": "CC-BY-4.0",
       "tags": ["developmental-language-disorder", "diagnosis", "scoping-review"]
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10828955/",
+      "source_title": "Genetic outcomes in children with developmental language disorder: a systematic review",
+      "license": "CC-BY",
+      "tags": ["developmental-language-disorder", "genetics", "children"]
     }
   ]
 }

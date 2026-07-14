@@ -1,6 +1,6 @@
 """Unit tests for the heading-aware chunker (no credentials needed)."""
 
-from ingestion.chunker import MAX_CHARS, MIN_CHARS, chunk_html
+from ingestion.chunker import MAX_CHARS, MIN_CHARS, chunk_html, chunk_jats
 
 HTML = """
 <html><head><title>Test Page</title></head><body>
@@ -42,6 +42,57 @@ def test_tiny_fragments_dropped():
     chunks = chunk_html(HTML)
     assert all(len(c.text) >= MIN_CHARS for c in chunks)
     assert not any(c.section == "Tiny" for c in chunks)
+
+
+def test_reference_sections_dropped():
+    html = """
+    <html><body><main>
+      <h2>Discussion</h2><p>{body}</p>
+      <h2>References</h2><p>{refs}</p>
+    </main></body></html>
+    """.format(
+        body="Findings suggest early intervention helps. " * 10,
+        refs="1. Smith J, et al. Some paper title. J Autism. (2019). doi:10.1/x. " * 10,
+    )
+    sections = {c.section for c in chunk_html(html)}
+    assert "Discussion" in sections
+    assert "References" not in sections
+
+
+JATS = """<?xml version="1.0"?>
+<article>
+  <front><article-meta><abstract><p>{abstract}</p></abstract></article-meta></front>
+  <body>
+    <sec><title>Introduction</title><p>{intro}</p>
+      <sec><title>Nested Background</title><p>{nested}</p></sec>
+    </sec>
+    <sec><title>Methods</title><p>{methods}</p></sec>
+  </body>
+  <back><ref-list><ref><p>{refs}</p></ref></ref-list></back>
+</article>
+""".format(
+    abstract="This review summarizes diagnostic tools. " * 8,
+    intro="ADHD affects attention regulation across ages. " * 8,
+    nested="Background detail on prevalence estimates worldwide. " * 8,
+    methods="We searched databases for eligible studies. " * 8,
+    refs="1. Author A. Title. Journal. (2020). doi:10.1/y. " * 10,
+)
+
+
+def test_jats_sections_use_sec_titles():
+    sections = {c.section for c in chunk_jats(JATS)}
+    assert {"Abstract", "Introduction", "Nested Background", "Methods"} <= sections
+
+
+def test_jats_reference_list_dropped():
+    text = " ".join(c.text for c in chunk_jats(JATS))
+    assert "doi:10.1/y" not in text
+
+
+def test_jats_nested_sections_not_duplicated():
+    chunks = chunk_jats(JATS)
+    intro = " ".join(c.text for c in chunks if c.section == "Introduction")
+    assert "Background detail" not in intro
 
 
 def test_long_sections_split_within_budget():

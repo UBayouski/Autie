@@ -45,25 +45,23 @@ Live: https://autie-2.web.app (web) → https://autie-agent-655618767802.us-cent
   ChatService); matches how restore renders history. Note: the multi-final
   case is model-dependent and wasn't reproducible on demand — logic-reviewed
   and deployed; confirm from real usage.
-- [ ] **Web: composer doesn't auto-grow** — `rows=1` textarea with a CSS
-  max-height but no height adjustment on input; long messages scroll inside a
-  one-line box.
-- [ ] **Agent: `list_sessions` across users needs a composite index** — the
-  collection-group query in FirestoreSessionService filters on `app_name`
-  without its index. Unused code path today; create the index or drop the
-  cross-user variant when first needed.
-- [ ] **Agent: concurrent requests on one session can interleave events** — no
-  locking in FirestoreSessionService; two simultaneous sends on the same
-  session id may interleave history. Low risk single-user, revisit with rate
-  limiting.
-- [ ] **Ingestion: Windows console mangles non-ASCII in logs** (cp1252) —
-  cosmetic; set `PYTHONIOENCODING=utf-8` or log ASCII only.
-- [ ] **Ingestion: 1st level domain is re-written** —
-  for some reason 1st level domain in citation is sometimes changed 
-  from original to something else. 
-  Example: 
-  https://www.cdc.gov/autism/signs-symptoms/index.html becomes
-  https://www.cdc.com/autism/signs-symptoms/index.html
+- [x] **Web: composer doesn't auto-grow** — fixed 2026-07-15: grows with input
+  up to the CSS max-height (verified 46→128px, capped), resets on send.
+- [x] **Agent: `list_sessions` across users needs a composite index** — fixed
+  2026-07-15: the cross-user path now raises NotImplementedError with the fix
+  described, instead of failing confusingly at query time.
+- [x] **Agent: concurrent requests on one session can interleave events** —
+  mitigated 2026-07-15: per-session asyncio lock serializes sends within an
+  instance (covers same-tab/two-tab cases at current concurrency). Residual:
+  cross-instance races; revisit if instances > 1 becomes common.
+- [x] **Ingestion: Windows console mangles non-ASCII in logs** — fixed
+  2026-07-15: stdout reconfigured to UTF-8 in ingest.py.
+- [x] **Citations: domain sometimes re-written** (cdc.gov → cdc.com) — fixed
+  2026-07-15 structurally: the model now cites by source NAME only and never
+  writes URLs; the backend appends a "Sources" footer built verbatim from the
+  tool payload (main.py collects source_urls from function responses). The
+  footer lists all sources retrieved for the turn ("sources consulted").
+  Same pattern to apply to Places links with structured service cards.
 
 Bug policy: quick fixes land immediately; anything deferred gets a line here
 (or a GitHub issue once the project has outside contributors — at that point
@@ -101,4 +99,8 @@ migrate this section to Issues).
   (note in app/tools/places.py).
 - **RAG storage revisit** — only if corpus approaches ~50k chunks
   (docs/rag-constraints.md §4).
+- **Google Search grounding** — not used; RAG citations + Places cover today's
+  needs, and Gemini's built-in google_search doesn't mix freely with custom
+  function tools. Trigger: freshness features (events, news) — build as a
+  search specialist behind AgentTool at that point.
 - **Vertex AI Agent Engine** — not planned; self-managed Cloud Run chosen.
