@@ -3,6 +3,8 @@
 Migration of autie.chat (Angular 15 + Dialogflow NLU + Firebase Functions + ChatGPT API +
 Google Places legacy) to an agentic architecture.
 
+Current status and open work: [backlog.md](backlog.md).
+
 Decisions locked in (2026-07):
 
 | Area | Decision |

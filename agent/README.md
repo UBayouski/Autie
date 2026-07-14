@@ -45,6 +45,13 @@ With `AUTH_DISABLED=true` unset (i.e. production behavior), requests need
   operational places only. The agent asks for missing what/where before calling.
   Needs `PLACES_API_KEY` (a key restricted to `places.googleapis.com`): from the
   `autie-places-api-key` secret on Cloud Run, from `.env` locally.
+- `search_knowledge_base(question)` — custom RAG on Firestore vector search
+  (`rag_chunks`, 768-dim `gemini-embedding-001`, COSINE, top-6). Answers are
+  cited inline. Guardrails: `../docs/rag-constraints.md`. Corpus + pipeline:
+  `ingestion/` (`python -m ingestion.ingest`); retrieval evals:
+  `RUN_RAG_EVALS=1 pytest tests/test_rag_evals.py`.
+- `get_crisis_resources()` — deterministic USA crisis directory (988 etc.),
+  served verbatim; also emitted by the safety pre-check in `app/safety/`.
 
 ## Helper scripts (Git Bash / any POSIX shell)
 

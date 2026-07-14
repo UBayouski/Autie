@@ -1,0 +1,17 @@
+{
+  "comment": "Retrieval eval: question -> a substring that must appear in the source_url of at least one top-K result. Grow this set as the corpus grows; run with RUN_RAG_EVALS=1 pytest tests/test_rag_evals.py (needs ADC + built index).",
+  "cases": [
+    {"question": "What are the early signs of autism in a toddler?", "expect_url_contains": "cdc.gov/autism/signs-symptoms"},
+    {"question": "At what age can autism be diagnosed?", "expect_url_contains": "cdc.gov/autism"},
+    {"question": "What screening tools are used for autism, like M-CHAT?", "expect_url_contains": "cdc.gov/autism/diagnosis"},
+    {"question": "What therapies and treatments exist for autistic children?", "expect_url_contains": "cdc.gov/autism/treatment"},
+    {"question": "What is behavioral therapy or ABA for autism?", "expect_url_contains": "treatment"},
+    {"question": "How common is autism, what is its prevalence?", "expect_url_contains": "data"},
+    {"question": "Does my child need speech therapy for communication delays?", "expect_url_contains": "treatment"},
+    {"question": "What causes autism spectrum disorder?", "expect_url_contains": "nichd.nih.gov"},
+    {"question": "Is there medication for autism symptoms?", "expect_url_contains": "treatment"},
+    {"question": "My 2 year old doesn't make eye contact and doesn't respond to their name", "expect_url_contains": "signs-symptoms"},
+    {"question": "What happens during an autism developmental evaluation?", "expect_url_contains": "diagnosis"},
+    {"question": "Where can I read reliable general information about autism spectrum disorder?", "expect_url_contains": "gov"}
+  ]
+}

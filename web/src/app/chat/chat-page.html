@@ -2,6 +2,11 @@
   <header class="chat-header">
     <h1>Autie</h1>
     <p class="tagline">A companion for the autism community</p>
+    @if (chat.messages().length > 0) {
+      <button class="new-chat" type="button" (click)="chat.newConversation()">
+        New chat
+      </button>
+    }
   </header>
 
   <main #scroller class="messages" aria-live="polite">

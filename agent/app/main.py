@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.runners import Runner
@@ -61,6 +61,28 @@ async def health() -> dict:
 
 def _sse(payload: dict) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+@app.get("/api/sessions/{session_id}")
+async def session_history(
+    session_id: str, user_id: str = Depends(get_current_user)
+) -> dict:
+    """Displayable history of one of the caller's own sessions (for reload restore)."""
+    session = await session_service.get_session(
+        app_name=APP_NAME, user_id=user_id, session_id=session_id
+    )
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    messages = []
+    for event in session.events:
+        if not (event.content and event.content.parts):
+            continue
+        text = "".join(part.text for part in event.content.parts if part.text)
+        if not text:
+            continue
+        role = "user" if event.author == "user" else "assistant"
+        messages.append({"role": role, "text": text})
+    return {"session_id": session_id, "messages": messages}
 
 
 @app.post("/api/chat")

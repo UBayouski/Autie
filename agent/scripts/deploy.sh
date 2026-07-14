@@ -5,6 +5,9 @@ set -e
 cd "$(dirname "$0")/.."
 . scripts/config.sh
 
+# Gate the deploy on the unit tests (container build itself happens in Cloud Build).
+.venv/Scripts/python.exe -m pytest tests/ -q
+
 gcloud run deploy "$SERVICE" \
     --source . \
     --project "$PROJECT" \

@@ -27,6 +27,8 @@ type StreamEvent =
  * Streams chat turns over SSE from POST /api/chat (same-origin: dev-server
  * proxy locally, Firebase Hosting rewrite in production).
  */
+const SESSION_STORAGE_KEY = 'autie-session-id';
+
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   private readonly auth = inject(AuthService);
@@ -36,12 +38,48 @@ export class ChatService {
 
   private sessionId: string | null = null;
 
+  constructor() {
+    const saved = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (saved) {
+      void this.restore(saved);
+    }
+  }
+
+  /** Reloads a previous conversation so a page refresh doesn't lose it. */
+  private async restore(sessionId: string): Promise<void> {
+    this.busy.set(true);
+    try {
+      const token = await this.auth.idToken();
+      const response = await fetch(`/api/sessions/${sessionId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        return;
+      }
+      const history = (await response.json()) as { messages: ChatMessage[] };
+      this.sessionId = sessionId;
+      this.messages.set(history.messages);
+    } catch {
+      // Network hiccup: leave the saved id for the next load.
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  newConversation(): void {
+    this.sessionId = null;
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    this.messages.set([]);
+  }
+
   async send(text: string): Promise<void> {
     const trimmed = text.trim();
     if (!trimmed || this.busy()) {
       return;
     }
     this.busy.set(true);
+    this.lastSegmentDone = false;
     this.messages.update((m) => [
       ...m,
       { role: 'user', text: trimmed },
@@ -92,10 +130,14 @@ export class ChatService {
     }
   }
 
+  /** True when the last assistant bubble holds a completed (final) segment. */
+  private lastSegmentDone = false;
+
   private handleEvent(event: StreamEvent): void {
     switch (event.type) {
       case 'session':
         this.sessionId = event.session_id;
+        localStorage.setItem(SESSION_STORAGE_KEY, event.session_id);
         break;
       case 'crisis_resources':
         // Insert the resources card before the streaming assistant bubble.
@@ -110,11 +152,18 @@ export class ChatService {
         ]);
         break;
       case 'text_delta':
+        if (this.lastSegmentDone) {
+          // New segment after a completed one (e.g. text -> tool call -> text):
+          // start a fresh bubble instead of touching the finished one.
+          this.messages.update((m) => [...m, { role: 'assistant', text: '' }]);
+          this.lastSegmentDone = false;
+        }
         this.appendToLast(event.text);
         break;
       case 'text_final':
-        // Authoritative full text; replaces accumulated deltas.
+        // Authoritative full text for the CURRENT segment only.
         this.setLast(event.text);
+        this.lastSegmentDone = true;
         break;
       case 'error':
         this.setLast(event.message, true);
