@@ -96,6 +96,17 @@ export class ChatService {
         },
         body: JSON.stringify({ message: trimmed, session_id: this.sessionId }),
       });
+      if (response.status === 429) {
+        // Rate limit windows are clock-hour buckets (see agent ratelimit.py),
+        // so the wait is until the top of the hour, not a full 60 minutes.
+        const wait = 60 - new Date().getMinutes();
+        this.setLast(
+          `You've reached the hourly message limit. Please try again in about ` +
+            `${wait} minute${wait === 1 ? '' : 's'}.`,
+          true,
+        );
+        return;
+      }
       if (!response.ok || !response.body) {
         throw new Error(`HTTP ${response.status}`);
       }

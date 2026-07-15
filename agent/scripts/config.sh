@@ -4,3 +4,4 @@
 : "${REGION:=us-central1}"
 : "${SERVICE:=autie-agent}"
 : "${GEMINI_MODEL:=gemini-2.5-flash}"
+: "${SERVICE_ACCOUNT:=autie-agent@autie-2.iam.gserviceaccount.com}"
