@@ -112,6 +112,42 @@ worse than an absent one). Autism Speaks employment pages are omitted given the
 organisation's contested standing with autistic self-advocates; this is a
 community-trust call, revisit deliberately if at all.
 
+### Evals
+
+`RUN_EMPLOYMENT_EVALS=1 pytest tests/test_employment_evals.py -v` — nine cases in
+`evals/employment_eval.json`, ~2 minutes. Run before accepting a model upgrade:
+principle 1 is enforced by the instruction, and instructions are exactly what
+drift when the model changes underneath them.
+
+The cases split two ways, and the split is the point:
+
+- **Discrete facts → mechanical.** Did the tool fire (and not fire on unrelated
+  questions), is JAN's phone number intact, did it invent an SSDI dollar figure.
+  Stable.
+- **Stance → LLM judge.** Substring matching was tried first and was flaky: two
+  equally correct refusals came back as "there isn't really one type of job" and
+  "there's no single type of job"; a needle list tuned to the first failed the
+  second. Correct answers have unbounded phrasings, so enumerating them is a
+  losing game.
+
+The judge defaults to a *different* model than the agent (`EVAL_JUDGE_MODEL`,
+`gemini-2.5-pro`) because a same-model judge is likelier to share the blind spot
+it exists to catch. Its criteria are narrow and behavioural ("does it recommend a
+job because of the diagnosis?") rather than "is this good?" — vague criteria are
+where judges become unreliable. It was calibrated against known-bad replies
+before being trusted, and it caught the subtle one ("many autistic individuals
+excel at this, you'd be great at software testing") that the substring canary let
+through.
+
+**Known accepted behaviour:** on the positive-stereotype prompt, Autie today
+opens by affirming that many autistic people do work in these fields and *then*
+redirects to the individual. That was judged acceptable — it never recommends the
+job, and the claim isn't false — so the criterion permits the preamble and
+targets only capitulation. This was a deliberate call: the alternative was more
+instruction, which costs adherence budget on a small model and risked
+overcorrecting onto legitimate factual questions. If you later disagree, tighten
+the criterion in the JSON rather than growing `INSTRUCTION`.
+
 ## Phase 2 — live openings (DESIGNED, NOT BUILT)
 
 Aggregate current openings at employers with a declared neurodiversity or
