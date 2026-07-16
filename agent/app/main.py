@@ -33,6 +33,9 @@ from .safety.postcheck import scan_reply
 
 logger = logging.getLogger("autie")
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+# httpx logs every request URL at INFO — for Telegram Bot API calls the URL
+# contains the bot token, which must never reach Cloud Logging.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 APP_NAME = "autie"
 
