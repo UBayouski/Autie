@@ -20,26 +20,41 @@ from fastapi.responses import StreamingResponse
 from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk.sessions.base_session_service import GetSessionConfig
 from google.genai import types
 from pydantic import BaseModel, Field
 
 from .agent import root_agent
 from .auth import get_current_user
+from .channels.telegram import create_telegram_router
+from .ratelimit import FirestoreRateLimiter, InMemoryRateLimiter
 from .safety.crisis import CRISIS_RESOURCES, detect_crisis
 from .safety.postcheck import scan_reply
 
 logger = logging.getLogger("autie")
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+# httpx logs every request URL at INFO — for Telegram Bot API calls the URL
+# contains the bot token, which must never reach Cloud Logging.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 APP_NAME = "autie"
+
+_RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "60"))
 
 # Firestore keeps sessions across Cloud Run scale-to-zero; memory is for tests.
 if os.getenv("SESSIONS_BACKEND", "firestore") == "memory":
     session_service = InMemorySessionService()
+    rate_limiter = InMemoryRateLimiter(_RATE_LIMIT_PER_HOUR)
 else:
     from .sessions import FirestoreSessionService
 
     session_service = FirestoreSessionService(
+        project=os.getenv("GOOGLE_CLOUD_PROJECT") or None,
+        database=os.getenv("FIRESTORE_DATABASE", "(default)"),
+        ttl_days=float(os.getenv("SESSION_TTL_DAYS", "30")),
+    )
+    rate_limiter = FirestoreRateLimiter(
+        _RATE_LIMIT_PER_HOUR,
         project=os.getenv("GOOGLE_CLOUD_PROJECT") or None,
         database=os.getenv("FIRESTORE_DATABASE", "(default)"),
     )
@@ -58,6 +73,19 @@ def _session_lock(key: str) -> asyncio.Lock:
         for stale_key in [k for k, v in _session_locks.items() if not v.locked()]:
             del _session_locks[stale_key]
     return _session_locks.setdefault(key, asyncio.Lock())
+
+
+# Channel adapters authenticate the platform (webhook secret), not the user —
+# they are registered outside the Firebase auth dependency by design.
+app.include_router(
+    create_telegram_router(
+        runner=runner,
+        session_service=session_service,
+        rate_limiter=rate_limiter,
+        session_lock=_session_lock,
+        app_name=APP_NAME,
+    )
+)
 
 
 class ChatRequest(BaseModel):
@@ -98,8 +126,48 @@ async def session_history(
     return {"session_id": session_id, "messages": messages}
 
 
+@app.delete("/api/sessions/{session_id}")
+async def delete_session(
+    session_id: str, user_id: str = Depends(get_current_user)
+) -> dict:
+    """Deletes one of the caller's own sessions and its events."""
+    session = await session_service.get_session(
+        app_name=APP_NAME, user_id=user_id, session_id=session_id,
+        config=GetSessionConfig(num_recent_events=0),
+    )
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    await session_service.delete_session(
+        app_name=APP_NAME, user_id=user_id, session_id=session_id
+    )
+    return {"deleted": session_id}
+
+
+@app.delete("/api/me")
+async def delete_my_data(user_id: str = Depends(get_current_user)) -> dict:
+    """Delete-my-data: removes every session and stored state for the caller."""
+    if hasattr(session_service, "delete_user_data"):
+        deleted = await session_service.delete_user_data(
+            app_name=APP_NAME, user_id=user_id
+        )
+    else:  # InMemory backend (tests) has no user doc to clean up.
+        listed = await session_service.list_sessions(app_name=APP_NAME, user_id=user_id)
+        for session in listed.sessions:
+            await session_service.delete_session(
+                app_name=APP_NAME, user_id=user_id, session_id=session.id
+            )
+        deleted = len(listed.sessions)
+    logger.info("delete-my-data ok sessions=%d", deleted)
+    return {"deleted_sessions": deleted}
+
+
 @app.post("/api/chat")
 async def chat(req: ChatRequest, user_id: str = Depends(get_current_user)) -> StreamingResponse:
+    if not await rate_limiter.check(user_id):
+        raise HTTPException(
+            status_code=429,
+            detail="You've reached the hourly message limit. Please try again later.",
+        )
     session_id = req.session_id or uuid.uuid4().hex
 
     session = await session_service.get_session(

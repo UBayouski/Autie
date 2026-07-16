@@ -14,8 +14,16 @@ Layout (root collection "adk"):
 
 Events are stored as JSON strings: Firestore rejects nested arrays, which model
 content (parts, function calls) can legally contain.
+
+Retention (docs/architecture.md §5): session and event docs carry an
+`expire_at` timestamp consumed by Firestore TTL policies on the `sessions` and
+`events` collection groups. The session doc's expire_at refreshes on every
+appended event; each event doc keeps the expire_at from its own write time, so
+a conversation that stays active longer than the TTL sheds its oldest events
+first (rolling window). Firestore deletes expired docs within ~24h of expiry.
 """
 
+import datetime
 import json
 import time
 import uuid
@@ -29,6 +37,15 @@ from google.adk.sessions.base_session_service import (
 )
 from google.adk.sessions.state import State
 from google.cloud import firestore
+
+
+def _expire_at(from_ts: float, ttl_days: float) -> Optional[datetime.datetime]:
+    """TTL timestamp for a doc written at from_ts; None when TTL is off."""
+    if ttl_days <= 0:
+        return None
+    return datetime.datetime.fromtimestamp(
+        from_ts + ttl_days * 86400, tz=datetime.timezone.utc
+    )
 
 
 def _split_state(state: Optional[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -50,9 +67,14 @@ class FirestoreSessionService(BaseSessionService):
         project: Optional[str] = None,
         database: str = "(default)",
         root_collection: str = "adk",
+        ttl_days: float = 30.0,
     ):
         self._db = firestore.AsyncClient(project=project, database=database)
         self._root = root_collection
+        self._ttl_days = ttl_days
+
+    def _expire_at(self, from_ts: float) -> Optional[datetime.datetime]:
+        return _expire_at(from_ts, self._ttl_days)
 
     def _app_ref(self, app_name: str):
         return self._db.collection(self._root).document(app_name)
@@ -81,13 +103,16 @@ class FirestoreSessionService(BaseSessionService):
             await self._user_ref(app_name, user_id).set(
                 {"user_state": scopes["user"]}, merge=True
             )
-        await self._session_ref(app_name, user_id, session_id).set({
+        session_doc: dict[str, Any] = {
             "app_name": app_name,
             "user_id": user_id,
             "state": scopes["session"],
             "create_time": now,
             "last_update_time": now,
-        })
+        }
+        if (expire_at := self._expire_at(now)) is not None:
+            session_doc["expire_at"] = expire_at
+        await self._session_ref(app_name, user_id, session_id).set(session_doc)
 
         session = Session(
             app_name=app_name,
@@ -196,6 +221,22 @@ class FirestoreSessionService(BaseSessionService):
             await event_doc.reference.delete()
         await session_ref.delete()
 
+    async def delete_user_data(self, *, app_name: str, user_id: str) -> int:
+        """Deletes every session (with events) and the user doc for a uid.
+
+        The delete-my-data path (docs/architecture.md §5). Returns the number
+        of sessions deleted.
+        """
+        user_ref = self._user_ref(app_name, user_id)
+        count = 0
+        async for session_doc in user_ref.collection("sessions").stream():
+            await self.delete_session(
+                app_name=app_name, user_id=user_id, session_id=session_doc.id
+            )
+            count += 1
+        await user_ref.delete()
+        return count
+
     async def get_user_state(self, *, app_name: str, user_id: str) -> dict[str, Any]:
         doc = await self._user_ref(app_name, user_id).get()
         if not doc.exists:
@@ -211,12 +252,18 @@ class FirestoreSessionService(BaseSessionService):
 
         event_id = event.id or uuid.uuid4().hex
         session_ref = self._session_ref(session.app_name, session.user_id, session.id)
-        await session_ref.collection("events").document(event_id).set({
+        event_doc: dict[str, Any] = {
             "data": json.dumps(event.model_dump(mode="json", exclude_none=True)),
             "timestamp": event.timestamp,
-        })
+        }
+        expire_at = self._expire_at(event.timestamp)
+        if expire_at is not None:
+            event_doc["expire_at"] = expire_at
+        await session_ref.collection("events").document(event_id).set(event_doc)
 
         updates: dict[str, Any] = {"last_update_time": event.timestamp}
+        if expire_at is not None:
+            updates["expire_at"] = expire_at
         if event.actions and event.actions.state_delta:
             scopes = _split_state(event.actions.state_delta)
             if scopes["app"]:

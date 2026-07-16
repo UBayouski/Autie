@@ -67,6 +67,13 @@ With `AUTH_DISABLED=true` unset (i.e. production behavior), requests need
   article pages serve a reCAPTCHA to scripts, which scrapes as junk text.
 - `get_crisis_resources()` — deterministic USA crisis directory (988 etc.),
   served verbatim; also emitted by the safety pre-check in `app/safety/`.
+- `get_employment_resources()` — deterministic USA employment-support directory
+  (JAN, Ticket to Work, state VR, American Job Centers, Hire Autism, EARN),
+  served verbatim. Design and principles: `../docs/employment.md` — the binding
+  one is that nothing may map a condition to a kind of work. Behaviour evals:
+  `RUN_EMPLOYMENT_EVALS=1 pytest tests/test_employment_evals.py -v` (~2 min,
+  a few cents; run before accepting a model upgrade, since these are exactly
+  the behaviours that drift silently).
 
 ## Helper scripts (Git Bash / any POSIX shell)
 
@@ -76,6 +83,7 @@ With `AUTH_DISABLED=true` unset (i.e. production behavior), requests need
 | `scripts/deploy.sh` | build + deploy to Cloud Run, prints the service URL |
 | `scripts/logs.sh [n]` | read the last *n* (default 50) Cloud Run log lines |
 | `scripts/chat.sh "msg" [session_id]` | chat from the terminal; `BASE_URL=`/`TOKEN=` env vars target the deployed, authenticated service |
+| `scripts/telegram-setup.sh` | one-time Telegram channel enablement: `TELEGRAM_BOT_TOKEN=<from @BotFather> ./telegram-setup.sh` stores secrets, deploys, registers the webhook (see `app/channels/telegram.py`) |
 
 Defaults (project `autie-2`, region `us-central1`, service `autie-agent`) live in
 `scripts/config.sh` and can be overridden via environment variables.
